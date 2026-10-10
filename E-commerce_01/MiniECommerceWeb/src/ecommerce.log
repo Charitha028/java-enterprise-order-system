@@ -1,0 +1,18 @@
+11:37:06.593 System started
+11:37:23.949 Asha placed Order-101 (Laptop x1)
+11:37:25.257 Inventory reserved Laptop x1 for Order-101
+11:37:26.333 Asha placed Order-102 (Mouse x1)
+11:37:26.553 Payment FAILED for Order-101 -> stock released (Laptop x1)
+11:37:26.652 Inventory reserved Mouse x1 for Order-102
+11:37:27.143 Payment FAILED for Order-102 -> stock released (Mouse x1)
+11:37:29.419 Asha placed Order-103 (Keyboard x1)
+11:37:29.685 Inventory reserved Keyboard x1 for Order-103
+11:37:30.486 Payment successful for Order-103 (1500.00)
+11:37:31.136 Order-103 shipped to Asha
+11:37:44.936 Restocked Laptop +10
+11:37:46.332 Restocked Mouse +10
+11:37:47.449 Restocked Keyboard +10
+11:37:52.200 Asha placed Order-104 (Keyboard x1)
+11:37:52.380 Inventory reserved Keyboard x1 for Order-104
+11:37:53.052 Payment successful for Order-104 (1500.00)
+11:37:53.724 Order-104 shipped to Asha

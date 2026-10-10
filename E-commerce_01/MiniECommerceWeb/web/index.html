@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order pipeline | Mini E-Commerce</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Order pipeline</h1>
+      <p class="sub">Place an order, or start a crowd of customers, and watch four Java threads pass each order along.</p>
+    </div>
+    <div id="conn" class="conn" role="status">Connecting</div>
+  </header>
+
+  <main>
+    <section class="pipeline" aria-labelledby="pipe-h">
+      <h2 id="pipe-h" class="sr-only">Live pipeline</h2>
+      <div class="flow">
+        <article class="stage" id="st-customers" data-state="IDLE">
+          <h3>Customers</h3>
+          <p class="who">Thread pool of 10</p>
+          <span class="badge" id="badge-customers">Idle</span>
+          <p class="doing" id="doing-customers">No customers ordering</p>
+          <button class="why" type="button" aria-expanded="false" aria-controls="why-customers">How it works</button>
+          <p class="why-text" id="why-customers" hidden>Each simulated customer is a task running in an ExecutorService pool. They are the producers: they put orders on the order queue.</p>
+        </article>
+
+        <div class="link" id="q-order" title="Order queue: hand-written with wait() and notifyAll()">
+          <div class="rail"><div class="slots"></div></div>
+          <p class="count"><b>0</b> waiting</p>
+        </div>
+
+        <article class="stage" id="st-inventory" data-state="NEW">
+          <h3>Inventory</h3>
+          <p class="who" id="who-inventory">Inventory-Thread</p>
+          <span class="badge" id="badge-inventory">Starting</span>
+          <p class="doing" id="doing-inventory"></p>
+          <button class="why" type="button" aria-expanded="false" aria-controls="why-inventory">How it works</button>
+          <p class="why-text" id="why-inventory" hidden>Takes the next order and reserves stock inside a synchronized method, so two threads can never sell the same last item.</p>
+        </article>
+
+        <div class="link" id="q-payment" title="Payment queue">
+          <div class="rail"><div class="slots"></div></div>
+          <p class="count"><b>0</b> waiting</p>
+        </div>
+
+        <article class="stage" id="st-payment" data-state="NEW">
+          <h3>Payment</h3>
+          <p class="who" id="who-payment">Payment-Thread</p>
+          <span class="badge" id="badge-payment">Starting</span>
+          <p class="doing" id="doing-payment"></p>
+          <button class="why" type="button" aria-expanded="false" aria-controls="why-payment">How it works</button>
+          <p class="why-text" id="why-payment" hidden>Charges the customer. About one payment in five fails on purpose, and the reserved stock goes back into the inventory.</p>
+        </article>
+
+        <div class="link" id="q-shipping" title="Shipping queue">
+          <div class="rail"><div class="slots"></div></div>
+          <p class="count"><b>0</b> waiting</p>
+        </div>
+
+        <article class="stage" id="st-shipping" data-state="NEW">
+          <h3>Shipping</h3>
+          <p class="who" id="who-shipping">Shipping-Thread</p>
+          <span class="badge" id="badge-shipping">Starting</span>
+          <p class="doing" id="doing-shipping"></p>
+          <button class="why" type="button" aria-expanded="false" aria-controls="why-shipping">How it works</button>
+          <p class="why-text" id="why-shipping" hidden>Packs paid orders and marks them shipped. Every stage also sends its events to the Logger thread.</p>
+        </article>
+      </div>
+    </section>
+
+    <dl class="stats" id="stats">
+      <div><dt>Orders placed</dt><dd id="s-total">0</dd></div>
+      <div><dt>In progress</dt><dd id="s-progress">0</dd></div>
+      <div class="ok"><dt>Shipped</dt><dd id="s-shipped">0</dd></div>
+      <div class="bad"><dt>Payment failed</dt><dd id="s-failed">0</dd></div>
+      <div class="bad"><dt>Out of stock</dt><dd id="s-rejected">0</dd></div>
+      <div><dt>Revenue shipped</dt><dd id="s-revenue">₹0</dd></div>
+    </dl>
+
+    <div class="cols">
+      <aside class="side">
+        <section class="panel" aria-labelledby="order-h">
+          <h2 id="order-h">Place an order</h2>
+          <form id="order-form" autocomplete="off" novalidate>
+            <label class="field">
+              <span>Your name</span>
+              <input id="f-name" type="text" maxlength="30" placeholder="Asha" required>
+            </label>
+
+            <fieldset class="field">
+              <legend>Product</legend>
+              <div class="picker" id="picker"><p class="muted">Loading products</p></div>
+            </fieldset>
+
+            <div class="field">
+              <span id="qty-label">Quantity</span>
+              <div class="stepper" role="group" aria-labelledby="qty-label">
+                <button type="button" id="qty-minus" aria-label="Decrease quantity">−</button>
+                <input id="f-qty" type="number" min="1" max="50" value="1" inputmode="numeric" aria-labelledby="qty-label">
+                <button type="button" id="qty-plus" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+
+            <button class="btn primary" id="btn-order" type="submit">Place order</button>
+            <p class="feedback" id="order-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="sim-h">
+          <h2 id="sim-h">Simulate a rush</h2>
+          <p class="muted">Start customers that order at random from the ExecutorService pool.</p>
+          <label class="range">
+            <span>Customers <b id="v-customers">5</b></span>
+            <input id="r-customers" type="range" min="1" max="10" value="5">
+          </label>
+          <label class="range">
+            <span>Orders each <b id="v-each">4</b></span>
+            <input id="r-each" type="range" min="1" max="10" value="4">
+          </label>
+          <button class="btn" id="btn-sim" type="button">Start 20 orders</button>
+          <p class="feedback" id="sim-feedback" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="panel" aria-labelledby="inv-h">
+          <h2 id="inv-h">Inventory</h2>
+          <ul class="inv" id="inventory"></ul>
+          <p class="feedback" id="inv-feedback" role="status" aria-live="polite"></p>
+        </section>
+      </aside>
+
+      <div class="main-col">
+        <section class="panel" aria-labelledby="orders-h">
+          <div class="panel-head">
+            <h2 id="orders-h">Orders</h2>
+            <div class="chips" id="filters" role="group" aria-label="Filter orders">
+              <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+              <button type="button" class="chip" data-filter="progress" aria-pressed="false">In progress</button>
+              <button type="button" class="chip" data-filter="shipped" aria-pressed="false">Shipped</button>
+              <button type="button" class="chip" data-filter="problem" aria-pressed="false">Problems</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Order</th><th>Customer</th><th>Item</th><th class="num">Total</th><th>Status</th><th>Time</th></tr></thead>
+              <tbody id="orders"></tbody>
+            </table>
+          </div>
+          <p class="empty" id="orders-empty">No orders yet. Place one on the left, or start a rush.</p>
+          <p class="muted small">Showing the latest 25. Select an order to see its journey.</p>
+        </section>
+
+        <section class="panel" aria-labelledby="log-h">
+          <div class="panel-head">
+            <h2 id="log-h">Activity log</h2>
+            <div class="log-tools">
+              <span class="badge" id="badge-logger">Starting</span>
+              <button class="btn small" id="btn-pause" type="button" aria-pressed="false">Pause</button>
+            </div>
+          </div>
+          <ol class="log" id="log" aria-label="Recent events, newest first"></ol>
+          <p class="muted small">The Logger thread is the only thread that writes <code>ecommerce.log</code>.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="journey" aria-labelledby="j-title">
+    <form method="dialog" class="j-head">
+      <h2 id="j-title"></h2>
+      <button class="btn small" aria-label="Close">Close</button>
+    </form>
+    <p class="muted" id="j-sub"></p>
+    <ol class="steps" id="j-steps"></ol>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
